@@ -83,7 +83,7 @@ dpl_add_range_to_headers_internal(const dpl_range_t *range,
     first = 0;
   else
     DPL_APPEND_STR(",");
-  
+
   if (DPL_UNDEF == range->start && DPL_UNDEF == range->end)
     return DPL_EINVAL;
   else if (DPL_UNDEF == range->start)
@@ -103,7 +103,7 @@ dpl_add_range_to_headers_internal(const dpl_range_t *range,
     }
 
   DPL_APPEND_CHAR(0);
-  
+
   ret = dpl_dict_add(headers, field, buf, 0);
   if (DPL_SUCCESS != ret)
     {
@@ -144,11 +144,11 @@ dpl_add_condition_to_headers(const dpl_condition_t *cond,
         {
           char date_str[128];
           struct tm tm_buf;
-          
+
           ret = strftime(date_str, sizeof (date_str), "%a, %d %b %Y %H:%M:%S GMT", gmtime_r(&condition->time, &tm_buf));
           if (0 == ret)
             return DPL_FAILURE;
-          
+
           if (condition->type == DPL_CONDITION_IF_MODIFIED_SINCE)
             {
               header = "If-Modified-Since";
@@ -158,7 +158,7 @@ dpl_add_condition_to_headers(const dpl_condition_t *cond,
                   return DPL_FAILURE;
                 }
             }
-          
+
           if (condition->type == DPL_CONDITION_IF_UNMODIFIED_SINCE)
             {
               header = "If-Unmodified-Since";
@@ -169,7 +169,7 @@ dpl_add_condition_to_headers(const dpl_condition_t *cond,
                 }
             }
         }
-      
+
       if (condition->type == DPL_CONDITION_IF_MATCH)
         {
           header = "If-Match";
@@ -179,7 +179,7 @@ dpl_add_condition_to_headers(const dpl_condition_t *cond,
               return DPL_FAILURE;
             }
         }
-      
+
       if (condition->type == DPL_CONDITION_IF_NONE_MATCH)
         {
           header = "If-None-Match";
@@ -300,6 +300,29 @@ dpl_req_gen_http_request(dpl_ctx_t *ctx,
 
   DPL_APPEND_STR(" ");
 
+  // See if we are using a proxy server then we need to use an absoluteURI.
+  if (ctx->proxy_server)
+    {
+      char *host_header;
+
+      if (ctx->use_https)
+        {
+            ret = DPL_FAILURE;
+            goto end;
+        }
+
+      // Lookup the Host header.
+      host_header = dpl_dict_get_value(headers, "Host");
+      if (NULL == host_header)
+        {
+            ret = DPL_FAILURE;
+            goto end;
+        }
+
+      DPL_APPEND_STR("http://");
+      DPL_APPEND_STR(host_header);
+    }
+
   if (resource_ue != NULL)
     DPL_APPEND_STR(resource_ue);
 
@@ -368,9 +391,9 @@ dpl_req_gen_http_request(dpl_ctx_t *ctx,
     *lenp = (p - buf);
 
   ret = DPL_SUCCESS;
-  
+
  end:
-  
+
   if (NULL != resource_ue)
     free(resource_ue);
 

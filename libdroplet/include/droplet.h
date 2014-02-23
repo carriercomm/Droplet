@@ -486,6 +486,11 @@ typedef struct dpl_ctx
   /*
    * profile
    */
+  int use_https:1;
+  int encode_slashes:1;       /*!< client wants slashes encoded */
+  int keep_alive:1;           /*!< client supports keep-alive */
+  int url_encoding:1;         /*!< some servers does not handle url encoding */
+  int max_redirects;          /*!< maximum number of redirects */
   int n_conn_buckets;         /*!< number of buckets         */
   int n_conn_max;             /*!< max connexions            */
   int n_conn_max_hits;        /*!< before auto-close         */
@@ -493,7 +498,6 @@ typedef struct dpl_ctx
   int conn_timeout;           /*!< connection timeout (sec)  */
   int read_timeout;           /*!< read timeout (sec)        */
   int write_timeout;          /*!< write timeout (sec)       */
-  int use_https;
   dpl_addrlist_t *addrlist;   /*!< list of addresses to contact */
   int cur_host;               /*!< current host beeing used in addrlist */
   int blacklist_expiretime;   /*!< expiration time of blacklisting */
@@ -507,8 +511,10 @@ typedef struct dpl_ctx
   char *ssl_key_file;         /*!< SSL private key of the client*/
   char *ssl_password;         /*!< password for the SSL private key*/
   char *ssl_ca_list;          /*!< SSL certificate authority (CA) list*/
-  char *ssl_crl_list;          /*!< SSL certificate revocation list (CRL) list*/
+  char *ssl_crl_list;         /*!< SSL certificate revocation list (CRL) list*/
   int cert_verif;             /*!< SSL certificate verification (default to true) */
+  char *proxy_server;
+  char *proxy_port;
 /*!< SSL method among SSLv3,TLSv1,TLSv1.1,TLSv1.2 and SSLv23 */
 #if OPENSSL_VERSION_NUMBER >= 0x10000000L
   const SSL_METHOD *ssl_method;
@@ -521,14 +527,10 @@ typedef struct dpl_ctx
   unsigned int trace_level;
   unsigned int default_behavior_flags;
   int trace_buffers;
-  int trace_binary;          /*!< default is trace ascii */
-  char *pricing;             /*!< might be NULL */
+  int trace_binary;           /*!< default is trace ascii */
+  char *pricing;              /*!< might be NULL */
   unsigned int read_buf_size;
   char *encrypt_key;
-  int encode_slashes;        /*!< client wants slashes encoded */
-  int keep_alive;            /*!< client supports keep-alive */
-  int url_encoding;          /*!< some servers does not handle url encoding */
-  int max_redirects;         /*!< maximum number of redirects */
   uint32_t enterprise_number; /*!< for generating native IDs */
   struct dpl_backend_s *backend;
 
@@ -598,7 +600,7 @@ typedef struct
   char *host;
   char *port;
   dpl_behavior_flag_t behavior_flags;
-  
+
   dpl_method_t method;
   char *bucket;
   char *resource;
