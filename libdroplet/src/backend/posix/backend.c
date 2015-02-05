@@ -310,9 +310,11 @@ dpl_posix_list_bucket(dpl_ctx_t *ctx,
   dpl_status_t ret, ret2;
   int iret;
   char path[MAXPATHLEN];
+  char full_name[MAXPATHLEN];
   struct dirent entry, *entryp;
-  dpl_vec_t     *common_prefixes = NULL;
-  dpl_vec_t     *objects = NULL;
+  struct stat st;
+  dpl_vec_t *common_prefixes = NULL;
+  dpl_vec_t *objects = NULL;
   dpl_common_prefix_t *common_prefix = NULL;
   dpl_object_t *object = NULL;
   char buf[MAXPATHLEN];
@@ -410,6 +412,13 @@ dpl_posix_list_bucket(dpl_ctx_t *ctx,
             {
               ret = DPL_ENOMEM;
               goto end;
+            }
+
+          snprintf(full_name, sizeof(full_name), "%s/%s", path, entryp->d_name);
+          if (stat(full_name, &st) == 0)
+            {
+              object->last_modified = st.st_mtime;
+              object->size = st.st_size;
             }
 
           ret2 = dpl_vec_add(objects, object);
